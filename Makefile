@@ -4,6 +4,8 @@
 #   make qemu       build for QEMU virt and run it (quit: Ctrl-A then X)
 #   make qemu-gdb   same, but wait for gdb on :1234
 #   make dis        disassemble the board build
+#   make run        load the board build over serial through U-Boot's "=> " prompt and run it
+#                   (board at "=> ", picocom closed)
 #   make clean
 
 CROSS   ?= arm-none-eabi-
@@ -33,7 +35,9 @@ CFLAGS  := -mcpu=cortex-a7 -marm -ffreestanding -fno-builtin -nostdlib \
            -O2 -g -Wall -Wextra -Iinclude $(DEFS)
 LDFLAGS := -T link.ld -Wl,--defsym=LOAD_ADDR=$(LOAD_ADDR) -nostdlib -Wl,--build-id=none -Wl,--no-warn-rwx-segments
 
-.PHONY: all qemu qemu-gdb dis clean
+.PHONY: all qemu qemu-gdb dis run clean
+
+PORT ?= /dev/cu.usbserial-210
 
 all: $(BUILD)/kernel.bin
 	@echo "built $< (load at $(LOAD_ADDR), $$(wc -c < $<) bytes)"
@@ -58,6 +62,10 @@ qemu-gdb:
 	$(MAKE) BOARD=qemu all
 	@echo "in another terminal: arm-none-eabi-gdb build/qemu/kernel.elf -ex 'target remote :1234'"
 	$(QEMU) -kernel build/qemu/kernel.elf -s -S
+
+run: $(BUILD)/kernel.bin
+	@[ "$(BOARD)" = luckfox ] || { echo "run is for BOARD=luckfox (use make qemu)"; exit 1; }
+	python3 tools/uboot-load.py $< --addr $(LOAD_ADDR) --port $(PORT) --go
 
 dis: $(BUILD)/kernel.elf
 	$(OBJDUMP) -d $< | less

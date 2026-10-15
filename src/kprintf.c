@@ -1,4 +1,4 @@
-/* A tiny printf. There is no C library in a kernel, so we write our own. */
+/* A tiny printf. There is no C library in a kernel  */
 #include <stdarg.h>
 #include "kernel.h"
 

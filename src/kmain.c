@@ -53,7 +53,7 @@ void kmain(int argc, char **argv, uint32_t caller_sp)
     kprintf("\n\nHello from krnl!\n");
     kprintf("board     : %s\n", BOARD_NAME);
     kprintf("loaded at : %p  (bss %p-%p, stack top %p)\n",
-            (uint32_t)_start, (uint32_t)__bss_start, (uint32_t)__bss_end, (uint32_t)__stack_top);
+            (uint32_t)_start & ~1u /* bit 0 = Thumb marker */, (uint32_t)__bss_start, (uint32_t)__bss_end, (uint32_t)__stack_top);
     kprintf("caller sp : %p  argc=%d\n", caller_sp, argc);
     kprintf("cpu mode  : %s (cpsr=%p)\n", mode_name(cpsr & 0x1f), cpsr);
     kprintf("cpu id    : %p  (%s)\n", midr,
