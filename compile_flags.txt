@@ -1,0 +1,4 @@
+--target=armv7a-none-eabi
+-ffreestanding
+-Iinclude
+-DBOARD_LUCKFOX

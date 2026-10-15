@@ -1,0 +1,55 @@
+
+┌───────────────────┬─────────────────────────────────────────────────────────────────┬─────────────┐
+│       Item        │                              Value                              │   Source    │
+├───────────────────┼─────────────────────────────────────────────────────────────────┼─────────────┤
+│ Board             │ Luckfox Pico (plain): no flash, no Ethernet, boots from microSD │ —           │
+├───────────────────┼─────────────────────────────────────────────────────────────────┼─────────────┤
+│ SoC               │ Rockchip RV1103                                                 │ —           │
+├───────────────────┼─────────────────────────────────────────────────────────────────┼─────────────┤
+│ CPU               │ 1× ARM Cortex-A7, ARMv7-A, 32-bit                               │ —           │
+├───────────────────┼─────────────────────────────────────────────────────────────────┼─────────────┤
+│ RAM               │ 64 MB at 0x00000000–0x03FFFFFF                                  │ /proc/iomem │
+├───────────────────┼─────────────────────────────────────────────────────────────────┼─────────────┤
+│ Debug UART        │ UART2 at 0xFF4C0000, 115200 8N1, 16550-style registers 4 bytes  │ device tree │
+│                   │ apart (reg-shift 2)                                             │             │
+├───────────────────┼─────────────────────────────────────────────────────────────────┼─────────────┤
+│ Interrupt         │ GIC-400 (GICv2) at 0xFF1F0000                                   │ device tree │
+│ controller        │                                                                 │             │
+├───────────────────┼─────────────────────────────────────────────────────────────────┼─────────────┤
+│ Timer             │ ARM Generic Timer (inside the CPU, accessed through CP15        │ —           │
+│                   │ registers)                                                      │             │
+├───────────────────┼─────────────────────────────────────────────────────────────────┼─────────────┤
+│ SD controller     │ 0xFFAA0000                                                      │ /proc/iomem │
+├───────────────────┼─────────────────────────────────────────────────────────────────┼─────────────┤
+│ GPIO              │ 0xFF380000, 0xFF530000, 0xFF550000, 0xFF560000                  │ /proc/iomem │
+├───────────────────┼─────────────────────────────────────────────────────────────────┼─────────────┤
+│ Serial pins       │ Pico pin 1 = TX, pin 2 = RX, pin 3 = GND                        │ schematic   │
+├───────────────────┼─────────────────────────────────────────────────────────────────┼─────────────┤
+│ Mac serial port   │ picocom -b 115200 /dev/cu.usbserial-210                         │ —           │
+├───────────────────┼─────────────────────────────────────────────────────────────────┼─────────────┤
+│ Quirk             │ Typing fiq switches the console to the FIQ debugger. Type       │ —           │
+│                   │ console to get back.                                            │             │
+└───────────────────┴─────────────────────────────────────────────────────────────────┴─────────────┘
+
+
+
+How your board boots, and how much of it you'll replace
+
+Power on
+  │
+  ▼
+BootROM ── built into the chip, can't be changed. Looks for SD/flash; if nothing → MaskROM (USB)
+  │
+  ▼
+idblock.img ── DDR init (Rockchip's closed binary) + SPL. Turns on the 64 MB of RAM.
+  │
+  ▼
+uboot.img ──── U-Boot: console, SD driver, loads the kernel into RAM, passes it the device tree
+  │
+  ▼
+boot.img ───── Linux kernel + device tree    ◄── YOU REPLACE THIS
+  │
+  ▼
+rootfs.img ─── init → getty → login → shell  ◄── LATER, YOUR OWN USERSPACE
+
+SD card layout (from sd_update.txt, in 512-byte sectors): env @ 0x0, idblock @ 0x40, uboot @ 0x440, boot @ 0x640, oem @ 0x10640, userdata @ 0x110640, rootfs @ 0x190640.
